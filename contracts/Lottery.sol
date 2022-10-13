@@ -17,7 +17,6 @@ contract Lottery is AccessControl {
         uint256 numOfTickets;
     }
 
-    // nödvändigt att någonsin testa denna direkt i test? i så fall hur?
     mapping(uint256 => LotteryStruct[]) public tokenIdToLotteryArray;
 
     mapping(address => bool) public validTokenPayments;
@@ -37,17 +36,13 @@ contract Lottery is AccessControl {
         IERC721 _nft
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _default_admin_role);
-        T = _T; // nyttja erc20 kontraktet med tokensen
+        T = _T; 
         moneyWallet = _moneyWallet;
-        // behövs inte, ska inte göra några nfts, endast för test
         nft = _nft;
     }
 
     LotteryStruct lotteryNum;
 
-    // LotteryStruct[] lotteryNum = tokenIdToLotteryArray[_nftId];
-
-    // den behöver inte vara payable eftersom ingen eth skickas in
     function buyTickets(
         uint256 _amount,
         address _tokenAddress,
@@ -58,10 +53,6 @@ contract Lottery is AccessControl {
         checkIfNftExists(_nftId);
         checkValidTicketPayment(_tokenAddress);
 
-        // pushar in lotterystruct arrays in i tokenidlottery mapping
-        // varje struct får sin egna array
-        // siffrorna ska endast höra till nftId och starta om vid nytt id
-        // spara length -1 och hämta den
         tokenIdToLotteryArray[_nftId].push(
             LotteryStruct(
                 msg.sender,
