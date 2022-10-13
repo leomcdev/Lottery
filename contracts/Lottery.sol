@@ -41,8 +41,6 @@ contract Lottery is AccessControl {
         nft = _nft;
     }
 
-    LotteryStruct lotteryNum;
-
     function buyTickets(
         uint256 _amount,
         address _tokenAddress,
