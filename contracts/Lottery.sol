@@ -43,6 +43,9 @@ contract Lottery is AccessControl {
         nft = _nft;
     }
 
+    // lägg till så att man inte kan skicka till address 0
+    // lägg till så att pengar inte kan försivnna
+
     function buyTickets(
         uint256 _amount,
         address _tokenAddress,
@@ -80,6 +83,8 @@ contract Lottery is AccessControl {
         checkValidTicketPayment(_tokenAddress);
 
         tokenIdToLotteryArray[_nftId].push(LotteryStruct(msg.sender, _amount));
+
+        IERC721(_tokenAddress).transferFrom(msg.sender, moneyWallet, _amount);
 
         emit TicketsOwned(
             msg.sender,
