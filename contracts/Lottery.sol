@@ -4,40 +4,41 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
-import "../contracts/CoriteTokenTestERC20.sol";
 
 contract Lottery is AccessControl {
-    event TicketsOwned(address buyer, uint256 startTicket, uint256 endTicket);
+    event TicketsOwned(
+        address buyer,
+        uint256 nftId,
+        uint256 amount,
+        address tokenAddress,
+        uint256 ticketsBought
+    );
     event validTokenPayment(address admin, bool);
+
+    bytes32 public constant ADMIN = keccak256("ADMIN");
 
     struct LotteryStruct {
         address buyer;
-        uint256 first;
-        uint256 last;
         uint256 numOfTickets;
     }
 
-    // set a  roof for tickets like 1000 per artist
+    mapping(address => uint256) internalNonce;
+
     mapping(uint256 => LotteryStruct[]) public tokenIdToLotteryArray;
-
     mapping(address => bool) public validTokenPayments;
-    mapping(uint256 => uint256) public getLastNum;
-    bool public lotteryPeriodEnded;
-    uint256 private minPrice = 10**18;
-    address private moneyWallet;
 
-    IERC20 public token;
+    bool public lotteryPeriodEnded;
+    address private moneyWallet;
     IERC721 public nft;
-    CoriteToken T;
+
+    address public serverPubKey;
 
     constructor(
         address _default_admin_role,
-        CoriteToken _T,
         address _moneyWallet,
         IERC721 _nft
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _default_admin_role);
-        T = _T;
         moneyWallet = _moneyWallet;
         nft = _nft;
     }
@@ -45,32 +46,66 @@ contract Lottery is AccessControl {
     function buyTickets(
         uint256 _amount,
         address _tokenAddress,
-        uint256 _nftId
+        uint256 _nftId,
+        uint256 ticketsBought,
+        bytes memory _prefix,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
     ) public {
         require(!lotteryPeriodEnded, "lottery period is over");
         require(_amount >= 1, "minimum buy is 1 lottery ticket");
+
         // add server sig
+        bytes memory message = abi.encode(
+            msg.sender,
+            _amount,
+            _tokenAddress,
+            _nftId,
+            ticketsBought
+        );
+
+        require(
+            ecrecover(
+                keccak256(abi.encodePacked(_prefix, message)),
+                _v,
+                _r,
+                _s
+            ) == serverPubKey,
+            "Signature invalid"
+        );
         checkIfNftExists(_nftId);
         checkValidTicketPayment(_tokenAddress);
 
-        tokenIdToLotteryArray[_nftId].push(
-            LotteryStruct(
-                msg.sender,
-                getLastNum[_nftId] + 1,
-                getLastNum[_nftId] + _amount,
-                _amount
-            )
-        );
-
-        getLastNum[_nftId] += _amount;
-
-        T.transferFrom(msg.sender, moneyWallet, _amount * minPrice);
+        tokenIdToLotteryArray[_nftId].push(LotteryStruct(msg.sender, _amount));
 
         emit TicketsOwned(
             msg.sender,
-            getLastNum[_nftId] - _amount + 1,
-            getLastNum[_nftId]
+            _nftId,
+            _amount,
+            _tokenAddress,
+            ticketsBought
         );
+    }
+
+    function claimNFT(
+        uint256 _tokenId,
+        bytes memory _prefix,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    ) external {
+        bytes memory message = abi.encode(msg.sender, _tokenId);
+        require(
+            ecrecover(
+                keccak256(abi.encodePacked(_prefix, message)),
+                _v,
+                _r,
+                _s
+            ) == serverPubKey,
+            "Invalid signature"
+        );
+        nft.transferFrom(address(this), msg.sender, _tokenId);
     }
 
     function transferNFTs(
@@ -78,17 +113,14 @@ contract Lottery is AccessControl {
         address _to,
         uint256 _tokenId
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        T.transferFrom(_from, _to, _tokenId);
+        nft.transferFrom(_from, _to, _tokenId);
     }
 
-    // ifall corite vill skicka tokens till någon av någon anledning
-    // bort nu när vi inte ska köpa med tokens
-    function transferTokens(
-        address _token,
-        address _to,
-        uint256 _amount
-    ) external {
-        IERC20(_token).transfer(_to, _amount);
+    function updateServer(address _serverPubKey)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        serverPubKey = _serverPubKey;
     }
 
     function setValidTicketPayment(address _tokenAddress, bool _validToken)
@@ -117,9 +149,6 @@ contract Lottery is AccessControl {
     {
         lotteryPeriodEnded = _lotteryPeriodEnded;
     }
-
-    //claimnft function
-    function claimNFT(address _claimerAddress, uint256 _tokenId) external {}
 
     function setMoneyWalletAddress(address _moneyWallet)
         external
