@@ -16,16 +16,11 @@ contract Lottery is AccessControl {
     );
     event validTokenPayment(address admin, bool);
     event NFTClaimed(address by, address from, uint256 tokenId);
-    bytes32 public constant ADMIN = keccak256("ADMIN");
 
-    struct LotteryStruct {
-        address buyer;
-        uint256 numOfTickets;
-    }
+    bytes32 public constant ADMIN = keccak256("ADMIN");
 
     mapping(address => uint256) internalNonce;
 
-    mapping(uint256 => LotteryStruct[]) public tokenIdToLotteryArray;
     mapping(address => bool) public validTokenPayments;
 
     bool public lotteryPeriodEnded;
@@ -167,14 +162,6 @@ contract Lottery is AccessControl {
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         moneyWallet = _moneyWallet;
-    }
-
-    function getMap(uint256 _nftId)
-        public
-        view
-        returns (LotteryStruct[] memory)
-    {
-        return tokenIdToLotteryArray[_nftId];
     }
 
     function selfDestruct(address _sendFundsTo)

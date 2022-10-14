@@ -202,7 +202,7 @@ describe("Test State", function () {
           LotteryContract.address,
           1
         );
-        // await testCO.connect(buyer).approve(originsHandler.address, 1000000000);
+        // await BUSDToken.connect(buyer).approve(buyer.address, 1000000000);
 
         expect(
           await LotteryContract.setValidTicketPayment(BUSDToken.address, true)
@@ -239,23 +239,23 @@ describe("Test State", function () {
         // console.log(await LotteryContract.getMap(1));
       });
       it("Investor should claim nft with server sig", async function () {
-      //   let obj = ethers.utils.defaultAbiCoder.encode(
-      //     ["address", "uint", "uint"],
-      //     [investor.address, 1, 0]
-      //   );
-      //   const { prefix, v, r, s } = await createSignature(obj);
-      //   await LotteryContract.updateServer(server.address);
+        let obj = ethers.utils.defaultAbiCoder.encode(
+          ["address", "uint", "uint"],
+          [investor.address, 1, 0]
+        );
+        const { prefix, v, r, s } = await createSignature(obj);
+        await LotteryContract.updateServer(server.address);
 
-      //   await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
-      //   await NFT.transferFrom(
-      //     defaultAdmin.address,
-      //     LotteryContract.address,
-      //     1
-      //   );
-      //   expect(await NFT.balanceOf(investor.address)).to.equal(0);
-      //   await LotteryContract.connect(investor).claimNFT(1, prefix, v, r, s);
-      //   expect(await NFT.balanceOf(investor.address)).to.equal(1);
-      // });
+        await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
+        await NFT.transferFrom(
+          defaultAdmin.address,
+          LotteryContract.address,
+          1
+        );
+        expect(await NFT.balanceOf(investor.address)).to.equal(0);
+        await LotteryContract.connect(investor).claimNFT(1, prefix, v, r, s);
+        expect(await NFT.balanceOf(investor.address)).to.equal(1);
+      });
 
       async function createSignature(obj) {
         obj = ethers.utils.arrayify(obj);
