@@ -62,9 +62,9 @@ contract Lottery is AccessControl {
             _amount,
             _tokenAddress,
             _nftId,
-            ticketsBought
+            ticketsBought,
+            internalNonce[msg.sender]
         );
-
         require(
             ecrecover(
                 keccak256(abi.encodePacked(_prefix, message)),
@@ -74,6 +74,8 @@ contract Lottery is AccessControl {
             ) == serverPubKey,
             "Signature invalid"
         );
+        internalNonce[msg.sender]++;
+
         checkIfNftExists(_nftId);
         checkValidTicketPayment(_tokenAddress);
 
@@ -95,7 +97,11 @@ contract Lottery is AccessControl {
         bytes32 _r,
         bytes32 _s
     ) external {
-        bytes memory message = abi.encode(msg.sender, _tokenId);
+        bytes memory message = abi.encode(
+            msg.sender,
+            _tokenId,
+            internalNonce[msg.sender]
+        );
         require(
             ecrecover(
                 keccak256(abi.encodePacked(_prefix, message)),
@@ -105,6 +111,8 @@ contract Lottery is AccessControl {
             ) == serverPubKey,
             "Invalid signature"
         );
+        internalNonce[msg.sender]++;
+
         nft.transferFrom(address(this), msg.sender, _tokenId);
     }
 

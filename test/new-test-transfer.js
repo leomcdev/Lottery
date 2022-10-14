@@ -190,8 +190,8 @@ describe("Test State", function () {
         // ADMIN = await LotteryContract.ADMIN();
 
         let obj = ethers.utils.defaultAbiCoder.encode(
-          ["address", "uint", "address", "uint", "uint"],
-          [investor.address, 2, BUSDToken.address, 1, 2]
+          ["address", "uint", "address", "uint", "uint", "uint"],
+          [investor.address, 2, BUSDToken.address, 1, 2, 0]
         );
         const { prefix, v, r, s } = await createSignature(obj);
         await LotteryContract.updateServer(server.address);
@@ -239,8 +239,8 @@ describe("Test State", function () {
       });
       it("Investor should claim nft with server sig", async function () {
         let obj = ethers.utils.defaultAbiCoder.encode(
-          ["address", "uint"],
-          [investor.address, 1]
+          ["address", "uint", "uint"],
+          [investor.address, 1, 0]
         );
         const { prefix, v, r, s } = await createSignature(obj);
         await LotteryContract.updateServer(server.address);
