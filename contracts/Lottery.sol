@@ -14,7 +14,7 @@ contract Lottery is AccessControl {
         uint256 ticketsBought
     );
     event validTokenPayment(address admin, bool);
-
+    event NFTClaimed(address by, address from, uint256 tokenId);
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
     struct LotteryStruct {
@@ -112,7 +112,7 @@ contract Lottery is AccessControl {
             "Invalid signature"
         );
         internalNonce[msg.sender]++;
-
+        emit NFTClaimed(address(this), msg.sender, _tokenId);
         nft.transferFrom(address(this), msg.sender, _tokenId);
     }
 
