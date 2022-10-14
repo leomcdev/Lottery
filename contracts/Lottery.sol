@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 contract Lottery is AccessControl {
     event TicketsOwned(
@@ -82,9 +83,7 @@ contract Lottery is AccessControl {
         checkIfNftExists(_nftId);
         checkValidTicketPayment(_tokenAddress);
 
-        tokenIdToLotteryArray[_nftId].push(LotteryStruct(msg.sender, _amount));
-
-        IERC721(_tokenAddress).transferFrom(msg.sender, moneyWallet, _amount);
+        IERC20(_tokenAddress).transferFrom(msg.sender, moneyWallet, _amount);
 
         emit TicketsOwned(
             msg.sender,
