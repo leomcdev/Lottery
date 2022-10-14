@@ -4,14 +4,8 @@ const totalSupply = ethers.BigNumber.from("10000000000000000000000");
 const val = ethers.BigNumber.from("100000000000000000000");
 const valBUSD = ethers.BigNumber.from("100000000000000000000000");
 
-var defaultAdmin, owner, buyer, investor;
+var defaultAdmin, owner, buyer, investor, server;
 
-async function setCoriteToken(_defaultAdmin, totalSupply) {
-  const CoriteToken = await ethers.getContractFactory("CoriteToken");
-  const coriteToken = await CoriteToken.deploy(_defaultAdmin, totalSupply);
-  await coriteToken.deployed();
-  return coriteToken;
-}
 async function setBUSDToken(totalSupply) {
   const BUSDToken = await ethers.getContractFactory("BUSD");
   const BUSDtoken = await BUSDToken.deploy(totalSupply);
@@ -19,19 +13,9 @@ async function setBUSDToken(totalSupply) {
   return BUSDtoken;
 }
 
-async function setLotteryContract(
-  _defaultAdmin,
-  _erctoken,
-  _moneyWallet,
-  _nft
-) {
+async function setLotteryContract(_defaultAdmin, _moneyWallet, _nft) {
   const Lottery = await ethers.getContractFactory("Lottery");
-  const lottery = await Lottery.deploy(
-    _defaultAdmin,
-    _erctoken,
-    _moneyWallet,
-    _nft
-  );
+  const lottery = await Lottery.deploy(_defaultAdmin, _moneyWallet, _nft);
   await lottery.deployed();
   return lottery;
 }
@@ -49,34 +33,21 @@ describe("Test State", function () {
   var LotteryContract;
   var NFT;
 
-  // always runs first
   beforeEach(async function () {
-    [defaultAdmin, walletMoneyAddress, buyer] = await ethers.getSigners();
+    [defaultAdmin, walletMoneyAddress, buyer, server, investor] =
+      await ethers.getSigners();
     console.log("def admin", defaultAdmin.address);
     console.log("walletmoney adr", walletMoneyAddress.address);
     console.log("buyr adr", buyer.address);
 
     NFT = await setNFT(defaultAdmin.address);
-
-    CoriteToken = await setCoriteToken(defaultAdmin.address, totalSupply);
-
     BUSDToken = await setBUSDToken(totalSupply);
 
     LotteryContract = await setLotteryContract(
       defaultAdmin.address,
-      CoriteToken.address,
       defaultAdmin.address,
       NFT.address
     );
-  });
-
-  describe("Deployment", function () {
-    it("Should assign the total supply of tokens to the owner", async function () {
-      const ownerBalance = await CoriteToken.balanceOf(defaultAdmin.address);
-      expect(await CoriteToken.balanceOf(defaultAdmin.address)).to.equal(
-        ownerBalance
-      );
-    });
   });
 
   describe("Transactions", function () {
@@ -86,7 +57,6 @@ describe("Test State", function () {
       ).to.be.revertedWith(
         "AccessControl: account 0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc is missing role 0x0000000000000000000000000000000000000000000000000000000000000000"
       );
-      // n
       const DEF = await NFT.DEFAULT_ADMIN_ROLE();
       await NFT.grantRole(DEF, NFT.address);
 
@@ -94,181 +64,50 @@ describe("Test State", function () {
       await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
     });
 
-    it("Should transfer NFT", async function () {
-      const DEF = await NFT.DEFAULT_ADMIN_ROLE();
-      await NFT.grantRole(DEF, NFT.address);
+    // it("Should transfer NFT", async function () {
+    //   const DEF = await NFT.DEFAULT_ADMIN_ROLE();
+    //   await NFT.grantRole(DEF, NFT.address);
 
-      await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
-      await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
+    //   await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
+    //   await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
 
-      await expect(
-        NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 3)
-      ).to.be.revertedWith("ERC721: invalid token ID");
+    //   await expect(
+    //     NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 3)
+    //   ).to.be.revertedWith("ERC721: invalid token ID");
 
-      await expect(
-        NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 4)
-      ).to.be.revertedWith("ERC721: invalid token ID");
+    //   await expect(
+    //     NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 4)
+    //   ).to.be.revertedWith("ERC721: invalid token ID");
 
-      await NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 1);
-      await NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 2);
-    });
-    it("Should check that nft exists", async function () {
-      const DEF = await NFT.DEFAULT_ADMIN_ROLE();
-      await NFT.grantRole(DEF, NFT.address);
+    //   await NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 1);
+    //   await NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 2);
+    // });
+    //   it("Should check that nft exists", async function () {
+    //     const DEF = await NFT.DEFAULT_ADMIN_ROLE();
+    //     await NFT.grantRole(DEF, NFT.address);
 
-      await expect(
-        LotteryContract.connect(defaultAdmin).checkIfNftExists(102)
-      ).to.be.revertedWith("ERC721: invalid token ID");
+    //     await expect(
+    //       LotteryContract.connect(defaultAdmin).checkIfNftExists(102)
+    //     ).to.be.revertedWith("ERC721: invalid token ID");
 
-      await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
+    //     await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
 
-      await NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 1);
-      expect(await LotteryContract.connect(defaultAdmin).checkIfNftExists(1));
-    });
+    //     await NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 1);
+    //     expect(await LotteryContract.connect(defaultAdmin).checkIfNftExists(1));
+    //   });
+    // });
 
-    it("Should be able to buy tickets", async function () {
-      const DEF = await NFT.DEFAULT_ADMIN_ROLE();
-      await NFT.grantRole(DEF, NFT.address);
-
-      // 1 00000 00000 00000 000
-      const value = ethers.BigNumber.from("10");
-      await expect(
-        LotteryContract.connect(defaultAdmin).buyTickets(
-          0,
-          "0xe9e7cea3dedca5984780bafc599bd69add087d56",
-          1
-        )
-      ).to.be.revertedWith("minimum buy is 1 lottery ticket");
-
-      await expect(
-        LotteryContract.connect(defaultAdmin).buyTickets(
-          value,
-          "0xe9e7cea3dedca5984780bafc599bd69add087d56",
-          15
-        )
-      ).to.be.revertedWith("ERC721: invalid token ID");
-
-      // first mint
-      await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
-      await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
-      await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
-      await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
-      await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
-
-      await CoriteToken.connect(defaultAdmin).approve(
-        LotteryContract.address,
-        val
-      );
-
-      // busd
-      expect(
-        await LotteryContract.connect(defaultAdmin).setValidTicketPayment(
-          "0xe9e7cea3dedca5984780bafc599bd69add087d56",
-          true
-        )
-      );
-      // usdt
-      expect(
-        await LotteryContract.connect(defaultAdmin).setValidTicketPayment(
-          "0xdac17f958d2ee523a2206206994597c13d831ec7",
-          true
-        )
-      );
-      expect(
-        await LotteryContract.connect(defaultAdmin).setValidTicketPayment(
-          "0xdac17f958d2ee523a2206206994597c13d831ec7",
-          false
-        )
-      );
-      // send in the nfts to lottery contract
-      await NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 1);
-      await NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 2);
-      await NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 3);
-      await NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 4);
-      //n for emit
-      await NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 5);
-
-      // buy tickets
-      await LotteryContract.connect(defaultAdmin).buyTickets(
-        value,
-        "0xe9e7cea3dedca5984780bafc599bd69add087d56",
-        1
-      );
-      await LotteryContract.connect(defaultAdmin).buyTickets(
-        value,
-        "0xe9e7cea3dedca5984780bafc599bd69add087d56",
-        2
-      );
-      await LotteryContract.connect(defaultAdmin).buyTickets(
-        value,
-        "0xe9e7cea3dedca5984780bafc599bd69add087d56",
-        1
-      );
-      await LotteryContract.connect(defaultAdmin).buyTickets(
-        value,
-        "0xe9e7cea3dedca5984780bafc599bd69add087d56",
-        2
-      );
-      await LotteryContract.connect(defaultAdmin).buyTickets(
-        value,
-        "0xe9e7cea3dedca5984780bafc599bd69add087d56",
-        1
-      );
-
-      // buy tickets with event
-      await expect(
-        LotteryContract.connect(defaultAdmin).buyTickets(
-          10,
-          "0xe9e7cea3dedca5984780bafc599bd69add087d56",
-          1
-        )
-      )
-        .to.emit(LotteryContract, "TicketsOwned")
-        .withArgs(defaultAdmin.address, 31, 40);
-
-      await expect(
-        LotteryContract.connect(defaultAdmin).buyTickets(
-          10,
-          "0xe9e7cea3dedca5984780bafc599bd69add087d56",
-          5
-        )
-      )
-        .to.emit(LotteryContract, "TicketsOwned")
-        .withArgs(defaultAdmin.address, 1, 10);
-      //n
-      await expect(
-        LotteryContract.connect(defaultAdmin).buyTickets(
-          23,
-          "0xe9e7cea3dedca5984780bafc599bd69add087d56",
-          5
-        )
-      )
-        .to.emit(LotteryContract, "TicketsOwned")
-        .withArgs(defaultAdmin.address, 11, 33);
-
-      console.log(
-        "map nftid 1",
-        await LotteryContract.connect(defaultAdmin).getMap(1)
-      );
-      console.log(
-        "map nftid 2",
-        await LotteryContract.connect(defaultAdmin).getMap(2)
-      );
-      console.log("get last num", await LotteryContract.getLastNum(2));
-    });
-  });
-
-  describe("Test functionality ", function () {
-    it("Should approve spenders", async function () {
-      await CoriteToken.connect(defaultAdmin).approve(
-        LotteryContract.address,
-        val
-      );
-      await CoriteToken.connect(defaultAdmin).approve(
-        defaultAdmin.address,
-        val
-      );
-    });
+    // describe("Test functionality ", function () {
+    //   it("Should approve spenders", async function () {
+    //     await CoriteToken.connect(defaultAdmin).approve(
+    //       LotteryContract.address,
+    //       val
+    //     );
+    //     await CoriteToken.connect(defaultAdmin).approve(
+    //       defaultAdmin.address,
+    //       val
+    //     );
+    //   });
 
     it("Should test lottery state", async function () {
       // only admin can end lottery
@@ -280,13 +119,13 @@ describe("Test State", function () {
 
       await LotteryContract.connect(defaultAdmin).endLotteryPeriod(true);
 
-      await expect(
-        LotteryContract.connect(defaultAdmin).buyTickets(
-          1,
-          "0xdac17f958d2ee523a2206206994597c13d831ec7",
-          val
-        )
-      ).to.be.revertedWith("lottery period is over");
+      // await expect(
+      //   LotteryContract.connect(defaultAdmin).buyTickets(
+      //     1,
+      //     "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      //     val
+      //   )
+      // ).to.be.revertedWith("lottery period is over");
 
       await LotteryContract.connect(defaultAdmin).endLotteryPeriod(false);
     });
@@ -344,77 +183,88 @@ describe("Test State", function () {
         "0x28B5F14e4D7B2CfF12C97038A06B4f41827b1970"
       );
     });
-    it("Should test to send in payments with BUSD token", async function () {
-      const value1 = ethers.BigNumber.from(
-        "1000000000000000000000000000000000000000"
-      );
-      // grant role
-      const DEF = await NFT.DEFAULT_ADMIN_ROLE();
-      await NFT.grantRole(DEF, NFT.address);
-      //mint
-      await NFT.mint(defaultAdmin.address);
-      // send in nft
-      await NFT.transferFrom(defaultAdmin.address, LotteryContract.address, 1);
-      // set valid payment == busd
-      expect(
-        await LotteryContract.setValidTicketPayment(BUSDToken.address, true)
-      );
-      console.log("före", await BUSDToken.balanceOf(buyer.address));
-      // skicka buyer busd tokens
-      await BUSDToken.transfer(buyer.address, val);
-      //kolla att buyer fick busd tokens
-      console.log("efter", await BUSDToken.balanceOf(buyer.address));
 
-      // set money wallet addressen
-      await LotteryContract.connect(defaultAdmin).setMoneyWalletAddress(
-        "0x28B5F14e4D7B2CfF12C97038A06B4f41827b1970"
-      );
+    describe("Investor should buy tickets and claim nft with server sig ", function () {
+      it("investor should buy tickets with server sig", async function () {
+        // buy tickets
+        // ADMIN = await LotteryContract.ADMIN();
 
-      // ge lotteri kontraktet rätten att skicka corite lottery tokens
-      await CoriteToken.connect(defaultAdmin).approve(
-        LotteryContract.address,
-        val
-      );
-      // ge lotteri kontraktet rätten att skicka buyers tokens till corite accountet
-      await CoriteToken.connect(buyer).approve(LotteryContract.address, val);
+        let obj = ethers.utils.defaultAbiCoder.encode(
+          ["address", "uint", "address", "uint", "uint"],
+          [investor.address, 2, BUSDToken.address, 1, 2]
+        );
+        const { prefix, v, r, s } = await createSignature(obj);
+        await LotteryContract.updateServer(server.address);
 
-      console.log(
-        "balance co tickets i lotteri kontraktet innan",
-        await CoriteToken.balanceOf(LotteryContract.address)
-      );
-      await CoriteToken.transfer(LotteryContract.address, 1000000);
-
-      console.log(
-        "balance co tickets i lotteri kontraktet efter",
-        await CoriteToken.balanceOf(LotteryContract.address)
-      );
-
-      // köp tickets med def admin
-      await expect(
-        LotteryContract.connect(defaultAdmin).buyTickets(
-          1,
-          BUSDToken.address,
+        await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
+        await NFT.transferFrom(
+          defaultAdmin.address,
+          LotteryContract.address,
           1
-        )
-      )
-        .to.emit(LotteryContract, "TicketsOwned")
-        .withArgs(defaultAdmin.address, 1, 1);
+        );
 
-      await LotteryContract.transferNFTs(
-        defaultAdmin.address,
-        buyer.address,
-        1
-      );
+        expect(
+          await LotteryContract.setValidTicketPayment(BUSDToken.address, true)
+        );
 
-      // // köp tickets med buyer
-      // await expect(
-      //   LotteryContract.connect(buyer).buyTickets(1, BUSDToken.address, 1)
-      // )
-      //   .to.emit(LotteryContract, "TicketsOwned")
-      //   .withArgs(buyer.address, 1, 1);
+        await LotteryContract.connect(investor).buyTickets(
+          2,
+          BUSDToken.address,
+          1,
+          2,
+          prefix,
+          v,
+          r,
+          s
+        );
 
-      // console.log(await CoriteToken.balanceOf(defaultAdmin.address));
-      // console.log(await BUSDToken.balanceOf(buyer.address));
+        // console.log(await LotteryContract.getMap(1));
+        // obj = ethers.utils.defaultAbiCoder.encode(
+        //   ["address", "uint", "address", "uint", "uint"],
+        //   [defaultAdmin.address, 2, BUSDToken.address, 2, 2]
+        // );
+        // const { prefix1, v1, r1, s1 } = await createSignature(obj);
+
+        // await LotteryContract.connect(defaultAdmin).buyTickets(
+        //   2,
+        //   BUSDToken.address,
+        //   2,
+        //   2,
+        //   prefix1,
+        //   v1,
+        //   r1,
+        //   s1
+        // );
+        // console.log(await LotteryContract.getMap(1));
+      });
+      it("Investor should claim nft with server sig", async function () {
+        let obj = ethers.utils.defaultAbiCoder.encode(
+          ["address", "uint"],
+          [investor.address, 1]
+        );
+        const { prefix, v, r, s } = await createSignature(obj);
+        await LotteryContract.updateServer(server.address);
+
+        await NFT.connect(defaultAdmin).mint(defaultAdmin.address);
+        await NFT.transferFrom(
+          defaultAdmin.address,
+          LotteryContract.address,
+          1
+        );
+        expect(await NFT.balanceOf(investor.address)).to.equal(0);
+        await LotteryContract.connect(investor).claimNFT(1, prefix, v, r, s);
+        expect(await NFT.balanceOf(investor.address)).to.equal(1);
+      });
+
+      async function createSignature(obj) {
+        obj = ethers.utils.arrayify(obj);
+        const prefix = ethers.utils.toUtf8Bytes(
+          "\x19Ethereum Signed Message:\n" + obj.length
+        );
+        const serverSig = await server.signMessage(obj);
+        const sig = ethers.utils.splitSignature(serverSig);
+        return { ...sig, prefix };
+      }
     });
   });
 });
