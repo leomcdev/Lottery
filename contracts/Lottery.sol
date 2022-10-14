@@ -17,7 +17,7 @@ contract Lottery is AccessControl {
         uint256 numOfTickets;
     }
 
-    // nödvändigt att någonsin testa denna direkt i test? i så fall hur?
+    // set a  roof for tickets like 1000 per artist
     mapping(uint256 => LotteryStruct[]) public tokenIdToLotteryArray;
 
     mapping(address => bool) public validTokenPayments;
@@ -37,31 +37,22 @@ contract Lottery is AccessControl {
         IERC721 _nft
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _default_admin_role);
-        T = _T; // nyttja erc20 kontraktet med tokensen
+        T = _T;
         moneyWallet = _moneyWallet;
-        // behövs inte, ska inte göra några nfts, endast för test
         nft = _nft;
     }
 
-    LotteryStruct lotteryNum;
-
-    // LotteryStruct[] lotteryNum = tokenIdToLotteryArray[_nftId];
-
-    // den behöver inte vara payable eftersom ingen eth skickas in
     function buyTickets(
         uint256 _amount,
         address _tokenAddress,
         uint256 _nftId
     ) public {
         require(!lotteryPeriodEnded, "lottery period is over");
-        require(_amount >= 1, "minimum buy is 1 lottery ticket"); // n
+        require(_amount >= 1, "minimum buy is 1 lottery ticket");
+        // add server sig
         checkIfNftExists(_nftId);
         checkValidTicketPayment(_tokenAddress);
 
-        // pushar in lotterystruct arrays in i tokenidlottery mapping
-        // varje struct får sin egna array
-        // siffrorna ska endast höra till nftId och starta om vid nytt id
-        // spara length -1 och hämta den
         tokenIdToLotteryArray[_nftId].push(
             LotteryStruct(
                 msg.sender,
@@ -80,6 +71,24 @@ contract Lottery is AccessControl {
             getLastNum[_nftId] - _amount + 1,
             getLastNum[_nftId]
         );
+    }
+
+    function transferNFTs(
+        address _from,
+        address _to,
+        uint256 _tokenId
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        T.transferFrom(_from, _to, _tokenId);
+    }
+
+    // ifall corite vill skicka tokens till någon av någon anledning
+    // bort nu när vi inte ska köpa med tokens
+    function transferTokens(
+        address _token,
+        address _to,
+        uint256 _amount
+    ) external {
+        IERC20(_token).transfer(_to, _amount);
     }
 
     function setValidTicketPayment(address _tokenAddress, bool _validToken)
@@ -109,6 +118,9 @@ contract Lottery is AccessControl {
         lotteryPeriodEnded = _lotteryPeriodEnded;
     }
 
+    //claimnft function
+    function claimNFT(address _claimerAddress, uint256 _tokenId) external {}
+
     function setMoneyWalletAddress(address _moneyWallet)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -122,5 +134,12 @@ contract Lottery is AccessControl {
         returns (LotteryStruct[] memory)
     {
         return tokenIdToLotteryArray[_nftId];
+    }
+
+    function selfDestruct(address _sendFundsTo)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        selfdestruct(payable(_sendFundsTo));
     }
 }

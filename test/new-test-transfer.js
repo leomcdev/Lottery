@@ -400,6 +400,12 @@ describe("Test State", function () {
         .to.emit(LotteryContract, "TicketsOwned")
         .withArgs(defaultAdmin.address, 1, 1);
 
+      await LotteryContract.transferNFTs(
+        defaultAdmin.address,
+        buyer.address,
+        1
+      );
+
       // // köp tickets med buyer
       // await expect(
       //   LotteryContract.connect(buyer).buyTickets(1, BUSDToken.address, 1)

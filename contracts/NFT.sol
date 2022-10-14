@@ -18,6 +18,7 @@ contract NFT is ERC721, AccessControl {
     uint256 totalSupply = 101;
 
     constructor(address _default_admin_role) ERC721("nft", "nft") {
+        // 0x254b3682d4b13CcBAF35d1b3142332b89F52FBa9
         _setupRole(DEFAULT_ADMIN_ROLE, _default_admin_role);
     }
 
