@@ -16,6 +16,8 @@ contract Lottery is AccessControl {
     );
     event validTokenPayment(address admin, bool);
     event NFTClaimed(address by, address from, uint256 tokenId);
+    event Transfer(address from, address to, uint256[] amount);
+    event TransferSingle(address from, address to, uint256 amount);
 
     mapping(address => uint256) internalNonce;
 
@@ -117,6 +119,7 @@ contract Lottery is AccessControl {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             nft.transferFrom(_from, _to, _tokenIds[i]);
         }
+        emit Transfer(_from, _to, _tokenIds);
     }
 
     function transferSingleNFT(
@@ -125,6 +128,7 @@ contract Lottery is AccessControl {
         uint256 _tokenId
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         nft.transferFrom(_from, _to, _tokenId);
+        emit TransferSingle(_from, _to, _tokenId);
     }
 
     function updateServer(address _serverPubKey)

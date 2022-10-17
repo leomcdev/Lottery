@@ -329,10 +329,14 @@ describe("Test State", function () {
       LotteryContract.address,
       2
     );
-    await LotteryContract.connect(defaultAdmin).transferNFTs(
-      LotteryContract.address,
-      buyer.address,
-      [1, 2]
-    );
+    await expect(
+      LotteryContract.connect(defaultAdmin).transferNFTs(
+        LotteryContract.address,
+        buyer.address,
+        [1, 2]
+      )
+    )
+      .to.emit(LotteryContract, "Transfer")
+      .withArgs(LotteryContract.address, buyer.address, [1, 2]);
   });
 });
