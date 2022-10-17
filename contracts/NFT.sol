@@ -12,15 +12,14 @@ contract NFT is ERC721, AccessControl {
     Counters.Counter tokenIdCounter;
     Counters.Counter tokenIdCounterFod;
 
-    ICNR CNR;
-
     uint256 mintCap = 101;
     uint256 public totalSupply;
 
-    //ICNR _CNR
-    constructor(address _default_admin_role) ERC721("", "") {
+    ICNR CNR;
+
+    constructor(address _default_admin_role, ICNR _CNR) ERC721("", "") {
         _setupRole(DEFAULT_ADMIN_ROLE, _default_admin_role);
-        // CNR = _CNR;
+        CNR = _CNR;
     }
 
     function mint(address _to) external onlyRole(DEFAULT_ADMIN_ROLE) {
