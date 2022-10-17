@@ -12,22 +12,13 @@ contract NFT is ERC721, AccessControl {
     Counters.Counter tokenIdCounter;
     Counters.Counter tokenIdCounterFod;
 
-    uint256 mintCap = 101;
     uint256 public totalSupply;
 
     ICNR CNR;
 
-    constructor(address _default_admin_role, ICNR _CNR) ERC721("", "") {
+    constructor(address _default_admin_role) ERC721("", "") {
         _setupRole(DEFAULT_ADMIN_ROLE, _default_admin_role);
-        CNR = _CNR;
-    }
-
-    function mint(address _to) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(tokenIdCounter.current() < mintCap, "Can only mint 202 nfts");
-        tokenIdCounter.increment();
-        uint256 tokenId = tokenIdCounter.current();
-        totalSupply++;
-        _safeMint(_to, tokenId);
+        // CNR = _CNR;
     }
 
     function mintProducers(address _to, uint256 _amount)
@@ -35,11 +26,11 @@ contract NFT is ERC721, AccessControl {
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         for (uint256 i = 0; i < _amount; i++) {
-            require(_amount <= mintCap, "Can only mint 101 nfts");
+            require(_amount <= 101, "Can only mint 101 nfts");
+            require(_amount != 0, "Can't mint 0 nfts");
             tokenIdCounter.increment();
-            uint256 tokenId = tokenIdCounter.current();
             totalSupply++;
-            _safeMint(_to, tokenId);
+            _safeMint(_to, tokenIdCounter.current());
         }
     }
 
@@ -48,11 +39,11 @@ contract NFT is ERC721, AccessControl {
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         for (uint256 i = 0; i < _amount; i++) {
-            require(_amount <= mintCap, "Can only mint 101 nfts");
+            require(_amount <= 101, "Can only mint 101 nfts");
+            require(_amount != 0, "Can't mint 0 nfts");
             tokenIdCounterFod.increment();
-            uint256 tokenId = tokenIdCounterFod.current() + 1000;
             totalSupply++;
-            _safeMint(_to, tokenId);
+            _safeMint(_to, tokenIdCounterFod.current() + 1000);
         }
     }
 
