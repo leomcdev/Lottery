@@ -114,7 +114,7 @@ contract Lottery is AccessControl {
         address _from,
         address _to,
         uint256[] calldata _tokenIds
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             nft.transferFrom(_from, _to, _tokenIds[i]);
         }
@@ -124,7 +124,7 @@ contract Lottery is AccessControl {
         address _from,
         address _to,
         uint256 _tokenId
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         nft.transferFrom(_from, _to, _tokenId);
     }
 
