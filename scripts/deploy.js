@@ -1,28 +1,20 @@
 const { ethers } = require("hardhat");
 require("dotenv").config();
-
-const mainAdmin = "0x28B5F14e4D7B2CfF12C97038A06B4f41827b1970";
-var nftContract;
-// 0x6b4Ab9De7a66785FCcF9344F4f16D9f0c139fbb5
+// https://testnet.bscscan.com/address/0x0cAdB0d9E410072325D2aCC00aAB99EB795a8c86
+const mainAdmin = "0x51E6a589dd3D829FBd720B2f8af68F881E2D4FC1";
 async function main() {
-  const TokenContract = await ethers.getContractFactory("TestERC20Token");
-  const tokenContract = await TokenContract.deploy(
+  const NFT = await ethers.getContractFactory("NFT");
+  const nft = await NFT.deploy(
     mainAdmin,
-    mainAdmin,
-    "1000000000000000000000000000"
+    "0x0cadb0d9e410072325d2acc00aab99eb795a8c86"
   );
-  await tokenContract.deployed();
-  console.log("Contract deployed to:", tokenContract.address);
+  await nft.deployed();
+  console.log("nft Contract deployed to:", nft.address);
 
   const Contract = await ethers.getContractFactory("Lottery");
-  const contract = await Contract.deploy(
-    mainAdmin,
-    tokenContract.address,
-    mainAdmin,
-    nftContract
-  );
+  const contract = await Contract.deploy(mainAdmin, mainAdmin, nft.address);
   await contract.deployed();
-  console.log("Contract deployed to:", contract.address);
+  console.log("lottery Contract deployed to:", contract.address);
 }
 
 main()

@@ -10,26 +10,51 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 contract NFT is ERC721, AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter tokenIdCounter;
+    Counters.Counter tokenIdCounterFod;
 
     ICNR CNR;
 
-    bytes32 public constant ASSET_PROVIDER = keccak256("ASSET_PROVIDER");
+    uint256 mintCap = 101;
+    uint256 totalSupply;
 
-    uint256 totalSupply = 101;
-
-    constructor(address _default_admin_role) ERC721("nft", "nft") {
-        // 0x254b3682d4b13CcBAF35d1b3142332b89F52FBa9
+    //ICNR _CNR
+    constructor(address _default_admin_role) ERC721("", "") {
         _setupRole(DEFAULT_ADMIN_ROLE, _default_admin_role);
+        // CNR = _CNR;
     }
 
     function mint(address _to) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(
-            tokenIdCounter.current() <= totalSupply,
-            "can only mint 101 nfts"
-        );
+        require(tokenIdCounter.current() < mintCap, "Can only mint 202 nfts");
         tokenIdCounter.increment();
         uint256 tokenId = tokenIdCounter.current();
+        totalSupply++;
         _safeMint(_to, tokenId);
+    }
+
+    function mintProducers(address _to, uint256 _amount)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        for (uint256 i = 0; i < _amount; i++) {
+            require(_amount <= mintCap, "Can only mint 101 nfts");
+            tokenIdCounter.increment();
+            uint256 tokenId = tokenIdCounter.current();
+            totalSupply++;
+            _safeMint(_to, tokenId);
+        }
+    }
+
+    function mintFoD(address _to, uint256 _amount)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        for (uint256 i = 0; i < _amount; i++) {
+            require(_amount <= mintCap, "Can only mint 101 nfts");
+            tokenIdCounterFod.increment();
+            uint256 tokenId = tokenIdCounterFod.current() + 1000;
+            totalSupply++;
+            _safeMint(_to, tokenId);
+        }
     }
 
     function tokenURI(uint256 _tokenId)

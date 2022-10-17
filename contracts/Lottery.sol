@@ -5,6 +5,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
+import "../interfaces/INFT.sol";
 
 contract Lottery is AccessControl {
     event TicketsOwned(
@@ -17,30 +18,25 @@ contract Lottery is AccessControl {
     event validTokenPayment(address admin, bool);
     event NFTClaimed(address by, address from, uint256 tokenId);
 
-    bytes32 public constant ADMIN = keccak256("ADMIN");
-
     mapping(address => uint256) internalNonce;
 
     mapping(address => bool) public validTokenPayments;
 
     bool public lotteryPeriodEnded;
     address private moneyWallet;
-    IERC721 public nft;
-
     address public serverPubKey;
+    INFT public nft;
+    IERC20 public token;
 
     constructor(
         address _default_admin_role,
         address _moneyWallet,
-        IERC721 _nft
+        INFT _nft
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _default_admin_role);
         moneyWallet = _moneyWallet;
         nft = _nft;
     }
-
-    // lägg till så att man inte kan skicka till address 0
-    // lägg till så att pengar inte kan försivnna
 
     function buyTickets(
         uint256 _amount,
@@ -55,7 +51,6 @@ contract Lottery is AccessControl {
         require(!lotteryPeriodEnded, "lottery period is over");
         require(_amount >= 1, "minimum buy is 1 lottery ticket");
 
-        // add server sig
         bytes memory message = abi.encode(
             msg.sender,
             _amount,
@@ -111,15 +106,25 @@ contract Lottery is AccessControl {
             "Invalid signature"
         );
         internalNonce[msg.sender]++;
-        emit NFTClaimed(address(this), msg.sender, _tokenId);
         nft.transferFrom(address(this), msg.sender, _tokenId);
+        emit NFTClaimed(address(this), msg.sender, _tokenId);
     }
 
     function transferNFTs(
         address _from,
         address _to,
+        uint256[] calldata _tokenIds
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            nft.transferFrom(_from, _to, _tokenIds[i]);
+        }
+    }
+
+    function transferSingleNFT(
+        address _from,
+        address _to,
         uint256 _tokenId
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         nft.transferFrom(_from, _to, _tokenId);
     }
 
