@@ -15,7 +15,7 @@ contract NFT is ERC721, AccessControl {
     ICNR CNR;
 
     uint256 mintCap = 101;
-    uint256 totalSupply;
+    uint256 public totalSupply;
 
     //ICNR _CNR
     constructor(address _default_admin_role) ERC721("", "") {

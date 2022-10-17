@@ -303,40 +303,41 @@ describe("Test State", function () {
 
     const DEF = await NFT.DEFAULT_ADMIN_ROLE();
     await NFT.grantRole(DEF, LotteryContract.address);
-    await NFT.connect(defaultAdmin).mintFoD(defaultAdmin.address, 101);
-    console.log("bal", await NFT.balanceOf(defaultAdmin.address));
+    await NFT.connect(defaultAdmin).mintFoD(LotteryContract.address, 101);
+    console.log("bal", await NFT.balanceOf(LotteryContract.address));
     // await NFT.connect(defaultAdmin).transferFrom(
     //   defaultAdmin.address,
     //   LotteryContract.address,
     //   1099
     // );
-    expect(await NFT.balanceOf(defaultAdmin.address)).to.equal(101);
+    expect(await NFT.balanceOf(LotteryContract.address)).to.equal(101);
     await expect(
-      NFT.connect(defaultAdmin).mintProducers(defaultAdmin.address, 102)
+      NFT.connect(defaultAdmin).mintProducers(LotteryContract.address, 102)
     ).to.be.revertedWith("Can only mint 101 nfts");
 
-    await NFT.connect(defaultAdmin).mintProducers(defaultAdmin.address, 101);
-    console.log("nft bal", await NFT.balanceOf(defaultAdmin.address));
+    await NFT.connect(defaultAdmin).mintProducers(LotteryContract.address, 101);
+    console.log("nft bal", await NFT.balanceOf(LotteryContract.address));
     expect(await NFT.ownerOf(1));
+    expect(await NFT.balanceOf(LotteryContract.address)).to.equal(202);
 
-    await NFT.connect(defaultAdmin).transferFrom(
-      defaultAdmin.address,
+    await LotteryContract.connect(defaultAdmin).transferNFTs(
       LotteryContract.address,
-      1
-    );
-    await NFT.connect(defaultAdmin).transferFrom(
       defaultAdmin.address,
-      LotteryContract.address,
-      2
+      [1]
     );
-    await expect(
-      LotteryContract.connect(defaultAdmin).transferNFTs(
-        LotteryContract.address,
-        buyer.address,
-        [1, 2]
-      )
-    )
-      .to.emit(LotteryContract, "Transfer")
-      .withArgs(LotteryContract.address, buyer.address, [1, 2]);
+    //   await NFT.connect(defaultAdmin).transferFrom(
+    //     defaultAdmin.address,
+    //     LotteryContract.address,
+    //     2
+    //   );
+    //   await expect(
+    //     LotteryContract.connect(defaultAdmin).transferNFTs(
+    //       LotteryContract.address,
+    //       buyer.address,
+    //       [1, 2]
+    //     )
+    //   )
+    //     .to.emit(LotteryContract, "Transfer")
+    //     .withArgs(LotteryContract.address, buyer.address, [1, 2]);
   });
 });

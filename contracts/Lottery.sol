@@ -5,8 +5,10 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "../interfaces/INFT.sol";
+import "@openzeppelin/contracts/interfaces/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-contract Lottery is AccessControl {
+contract Lottery is AccessControl, IERC721Receiver {
     event TicketsOwned(
         address buyer,
         uint256 nftId,
@@ -17,9 +19,8 @@ contract Lottery is AccessControl {
     event validTokenPayment(address admin, bool);
     event NFTClaimed(address by, address from, uint256 tokenId);
     event Transfer(address from, address to, uint256[] amount);
-    event TransferSingle(address from, address to, uint256 amount);
 
-    mapping(address => uint256) internalNonce;
+    mapping(address => uint256) public internalNonce;
 
     mapping(address => bool) public validTokenPayments;
 
@@ -122,15 +123,6 @@ contract Lottery is AccessControl {
         emit Transfer(_from, _to, _tokenIds);
     }
 
-    function transferSingleNFT(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        nft.transferFrom(_from, _to, _tokenId);
-        emit TransferSingle(_from, _to, _tokenId);
-    }
-
     function updateServer(address _serverPubKey)
         public
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -170,6 +162,15 @@ contract Lottery is AccessControl {
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         moneyWallet = _moneyWallet;
+    }
+
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external pure override returns (bytes4) {
+        return IERC721Receiver.onERC721Received.selector;
     }
 
     function selfDestruct(address _sendFundsTo)
