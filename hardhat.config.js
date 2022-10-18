@@ -11,7 +11,6 @@ require("@nomicfoundation/hardhat-chai-matchers");
 const {
   ETHSCAN_API_KEY,
   ETH_API_URL,
-  PRIVATE_KEY,
   BSCSCAN_API_KEY,
   POLYGONSCAN_API_URL,
   POLYGONSCAN_API_KEY,
@@ -25,11 +24,11 @@ module.exports = {
     hardhat: {
       allowUnlimitedContractSize: true,
     },
-    rinkeby: {
-      url: ETH_API_URL,
-      accounts: [`0x${PRIVATE_KEY}`],
-      allowUnlimitedContractSize: true,
-    },
+    // rinkeby: {
+    //   url: ETH_API_URL,
+    //   accounts: [`0x${PRIVATE_KEY}`],
+    //   allowUnlimitedContractSize: true,
+    // },
     BSCTestnet: {
       url: BSC_API_URL,
       accounts: [`0x${BSCTESTNET_PRIVATE_KEY_1970}`],
@@ -40,11 +39,11 @@ module.exports = {
     //   accounts: [`0x${PRIVATE_KEY}`],
     //   allowUnlimitedContractSize: true,
     // },
-    mumbai: {
-      url: POLYGONSCAN_API_URL,
-      accounts: [`0x${PRIVATE_KEY}`],
-      allowUnlimitedContractSize: true,
-    },
+    // mumbai: {
+    //   url: POLYGONSCAN_API_URL,
+    //   accounts: [`0x${PRIVATE_KEY}`],
+    //   allowUnlimitedContractSize: true,
+    // },
   },
 
   gasReporter: {

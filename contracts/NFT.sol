@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract NFT is ERC721, AccessControl {
     using Counters for Counters.Counter;
-    Counters.Counter tokenIdCounter;
+    Counters.Counter tokenIdCounterProducer;
     Counters.Counter tokenIdCounterFod;
 
     uint256 public totalSupply;
@@ -25,12 +25,12 @@ contract NFT is ERC721, AccessControl {
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
+        require(_amount <= 101, "Can only mint 101 nfts");
+        require(_amount != 0, "Can't mint 0 nfts");
         for (uint256 i = 0; i < _amount; i++) {
-            require(_amount <= 101, "Can only mint 101 nfts");
-            require(_amount != 0, "Can't mint 0 nfts");
-            tokenIdCounter.increment();
+            tokenIdCounterProducer.increment();
             totalSupply++;
-            _safeMint(_to, tokenIdCounter.current());
+            _safeMint(_to, tokenIdCounterProducer.current());
         }
     }
 
@@ -38,9 +38,9 @@ contract NFT is ERC721, AccessControl {
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
+        require(_amount <= 101, "Can only mint 101 nfts");
+        require(_amount != 0, "Can't mint 0 nfts");
         for (uint256 i = 0; i < _amount; i++) {
-            require(_amount <= 101, "Can only mint 101 nfts");
-            require(_amount != 0, "Can't mint 0 nfts");
             tokenIdCounterFod.increment();
             totalSupply++;
             _safeMint(_to, tokenIdCounterFod.current() + 1000);

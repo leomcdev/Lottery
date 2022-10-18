@@ -17,7 +17,7 @@ contract Lottery is AccessControl, IERC721Receiver {
     );
     event validTokenPayment(address admin, bool);
     event NFTClaimed(address by, address from, uint256 tokenId);
-    event Transfer(address from, address to, uint256[] amount);
+    event Transfer(address from, address[] to, uint256[] amount);
 
     mapping(address => uint256) public internalNonce;
 
@@ -113,11 +113,16 @@ contract Lottery is AccessControl, IERC721Receiver {
 
     function transferNFTs(
         address _from,
-        address _to,
+        address[] calldata _to,
         uint256[] calldata _tokenIds
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(
+            _to.length == _tokenIds.length,
+            "Need to send as many nfts as addressess"
+        );
+
         for (uint256 i = 0; i < _tokenIds.length; i++) {
-            nft.transferFrom(_from, _to, _tokenIds[i]);
+            nft.transferFrom(_from, _to[i], _tokenIds[i]);
         }
         emit Transfer(_from, _to, _tokenIds);
     }
