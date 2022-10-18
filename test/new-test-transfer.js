@@ -339,16 +339,20 @@ describe("Test State", function () {
     //     .withArgs(LotteryContract.address, buyer.address, [1, 2]);
   });
   it("Should airdrop nfts", async function () {
-    var arr = [buyer.address, investor.address];
+    var arr = [buyer.address, investor.address, buyer.address];
     const DEF = await NFT.DEFAULT_ADMIN_ROLE();
     await NFT.grantRole(DEF, LotteryContract.address);
     await NFT.connect(defaultAdmin).mintProducers(LotteryContract.address, 101);
     console.log("bal", await NFT.balanceOf(LotteryContract.address));
 
-    await LotteryContract.transferNFTs(LotteryContract.address, arr, [1, 2]);
+    await expect(
+      LotteryContract.transferNFTs(LotteryContract.address, arr, [1, 2, 3, 4])
+    ).to.be.revertedWith("Need to send as many nfts as addressess");
+
+    await LotteryContract.transferNFTs(LotteryContract.address, arr, [1, 2, 3]);
     await NFT.balanceOf(buyer.address);
-    expect(await NFT.balanceOf(buyer.address)).to.equal(1);
+    expect(await NFT.balanceOf(buyer.address)).to.equal(2);
     expect(await NFT.balanceOf(investor.address)).to.equal(1);
-    expect(await NFT.balanceOf(LotteryContract.address)).to.equal(99);
+    expect(await NFT.balanceOf(LotteryContract.address)).to.equal(98);
   });
 });
